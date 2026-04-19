@@ -10,7 +10,7 @@ import { ADD_POSTS_PAGE, AUTH_PAGE, POSTS_PAGE } from "../routes.js";
  */
 export function renderHeaderComponent({ element }) {
   /**
-   * Рендерит содержимое заголовка.
+   * 
    */
   element.innerHTML = `
   <div class="page-header">
@@ -30,11 +30,7 @@ export function renderHeaderComponent({ element }) {
   </div>
   `;
 
-  /**
-   * Обработчик клика по кнопке "Добавить пост"/"Войти".
-   * Если пользователь авторизован, перенаправляет на страницу добавления постов.
-   * Если пользователь не авторизован, перенаправляет на страницу авторизации.
-   */
+ 
   element
     .querySelector(".add-or-login-button")
     .addEventListener("click", () => {
@@ -45,18 +41,12 @@ export function renderHeaderComponent({ element }) {
       }
     });
 
-  /**
-   * Обработчик клика по логотипу.
-   * Перенаправляет на страницу с постами.
-   */
+  
   element.querySelector(".logo").addEventListener("click", () => {
     goToPage(POSTS_PAGE);
   });
 
-  /**
-   * Обработчик клика по кнопке "Выйти".
-   * Если кнопка существует (т.е. пользователь авторизован), вызывает функцию `logout`.
-   */
+  
   element.querySelector(".logout-button")?.addEventListener("click", logout);
 
   return element;

@@ -73,19 +73,19 @@ export function renderAuthPageComponent({ appEl, setUser }) {
     appEl.innerHTML = appHtml;
 
     /**
-     * Устанавливает сообщение об ошибке в форме.
-     * @param {string} message - Текст сообщения об ошибке.
+    
+     * @param {string} message 
      */
     const setError = (message) => {
       appEl.querySelector(".form-error").textContent = message;
     };
 
-    // Рендерим заголовок страницы
+
     renderHeaderComponent({
       element: document.querySelector(".header-container"),
     });
 
-    // Если режим регистрации, рендерим компонент загрузки изображения
+  
     const uploadImageContainer = appEl.querySelector(".upload-image-container");
     if (uploadImageContainer) {
       renderUploadImageComponent({
@@ -96,12 +96,11 @@ export function renderAuthPageComponent({ appEl, setUser }) {
       });
     }
 
-    // Обработка клика на кнопку входа/регистрации
     document.getElementById("login-button").addEventListener("click", () => {
       setError("");
 
       if (isLoginMode) {
-        // Обработка входа
+      
         const login = document.getElementById("login-input").value;
         const password = document.getElementById("password-input").value;
 
@@ -124,7 +123,7 @@ export function renderAuthPageComponent({ appEl, setUser }) {
             setError(error.message);
           });
       } else {
-        // Обработка регистрации
+      
         const login = document.getElementById("login-input").value;
         const name = document.getElementById("name-input").value;
         const password = document.getElementById("password-input").value;
@@ -160,13 +159,13 @@ export function renderAuthPageComponent({ appEl, setUser }) {
       }
     });
 
-    // Обработка переключения режима (вход ↔ регистрация)
+  
     document.getElementById("toggle-button").addEventListener("click", () => {
       isLoginMode = !isLoginMode;
-      renderForm(); // Перерисовываем форму с новым режимом
+      renderForm(); 
     });
   };
 
-  // Инициализация формы
+  
   renderForm();
 }

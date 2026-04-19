@@ -1,4 +1,4 @@
-import { getPosts } from "./api.js";
+import { getPosts, createPost } from "./api.js";
 import { renderAddPostPageComponent } from "./components/add-post-page-component.js";
 import { renderAuthPageComponent } from "./components/auth-page-component.js";
 import {
@@ -15,8 +15,11 @@ import {
   removeUserFromLocalStorage,
   saveUserToLocalStorage,
 } from "./helpers.js";
+import { showNotification } from "./components/notification-component.js";
 
 export let user = getUserFromLocalStorage();
+window.user = user; 
+
 export let page = null;
 export let posts = [];
 
@@ -27,13 +30,13 @@ const getToken = () => {
 
 export const logout = () => {
   user = null;
+  window.user = null;
   removeUserFromLocalStorage();
+  showNotification("👋 Вы вышли из аккаунта");
   goToPage(POSTS_PAGE);
 };
 
-/**
- * Включает страницу приложения
- */
+
 export const goToPage = (newPage, data) => {
   if (
     [
@@ -45,7 +48,10 @@ export const goToPage = (newPage, data) => {
     ].includes(newPage)
   ) {
     if (newPage === ADD_POSTS_PAGE) {
-      /* Если пользователь не авторизован, то отправляем его на страницу авторизации перед добавлением поста */
+      
+      if (!user) {
+        showNotification("🔒 Авторизуйтесь, чтобы добавить пост", true);
+      }
       page = user ? ADD_POSTS_PAGE : AUTH_PAGE;
       return renderApp();
     }
@@ -62,16 +68,45 @@ export const goToPage = (newPage, data) => {
         })
         .catch((error) => {
           console.error(error);
+          showNotification("❌ Не удалось загрузить посты", true);
           goToPage(POSTS_PAGE);
         });
     }
 
     if (newPage === USER_POSTS_PAGE) {
-      // @@TODO: реализовать получение постов юзера из API
       console.log("Открываю страницу пользователя: ", data.userId);
-      page = USER_POSTS_PAGE;
-      posts = [];
-      return renderApp();
+      page = LOADING_PAGE;
+      renderApp();
+      
+     
+      const token = getToken();
+      const userId = data.userId;
+      
+      fetch(`https://wedev-api.sky.pro/api/v1/prod/instapro/user-posts/${userId}`, {
+        method: "GET",
+        headers: {
+          Authorization: token,
+        },
+      })
+        .then((response) => {
+          if (response.status === 401) {
+            throw new Error("Нет авторизации");
+          }
+          return response.json();
+        })
+        .then((data) => {
+          page = USER_POSTS_PAGE;
+          posts = data.posts || [];
+          renderApp();
+        })
+        .catch((error) => {
+          console.error(error);
+          showNotification("❌ Не удалось загрузить посты пользователя", true);
+          page = POSTS_PAGE;
+          renderApp();
+        });
+      
+      return;
     }
 
     page = newPage;
@@ -85,6 +120,7 @@ export const goToPage = (newPage, data) => {
 
 const renderApp = () => {
   const appEl = document.getElementById("app");
+  
   if (page === LOADING_PAGE) {
     return renderLoadingPageComponent({
       appEl,
@@ -98,7 +134,9 @@ const renderApp = () => {
       appEl,
       setUser: (newUser) => {
         user = newUser;
+        window.user = newUser;
         saveUserToLocalStorage(user);
+        showNotification(`🎉 Добро пожаловать, ${newUser.name || newUser.login}!`);
         goToPage(POSTS_PAGE);
       },
       user,
@@ -110,9 +148,21 @@ const renderApp = () => {
     return renderAddPostPageComponent({
       appEl,
       onAddPostClick({ description, imageUrl }) {
-        // @TODO: реализовать добавление поста в API
         console.log("Добавляю пост...", { description, imageUrl });
-        goToPage(POSTS_PAGE);
+        
+        createPost({
+          token: getToken(),
+          description: description,
+          imageUrl: imageUrl,
+        })
+        .then(() => {
+          showNotification("✅ Пост успешно добавлен!");
+          goToPage(POSTS_PAGE);
+        })
+        .catch((error) => {
+          console.error("Ошибка при добавлении поста:", error);
+          showNotification("❌ Не удалось добавить пост. Попробуйте ещё раз.", true);
+        });
       },
     });
   }
@@ -124,9 +174,9 @@ const renderApp = () => {
   }
 
   if (page === USER_POSTS_PAGE) {
-    // @TODO: реализовать страницу с фотографиями отдельного пользвателя
-    appEl.innerHTML = "Здесь будет страница фотографий пользователя";
-    return;
+    return renderPostsPageComponent({
+      appEl,
+    });
   }
 };
 
